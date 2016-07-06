@@ -149,7 +149,7 @@ Forms starting with `block` in expression context expand into
 
     → (match-lambda*
         [(list pat1a pat1b) exp1a exp1b]
-        [(list pat2a) exp2]
+        [(list pat2a) exp2])
 
 The `map` function exported from `something/lang/implicit` differs
 from that of `racket/base` in that it takes its arguments in the
