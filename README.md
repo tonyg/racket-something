@@ -81,6 +81,33 @@ and they are read as
 and are then made available to the normal macro-expansion process
 (which involves a new infix-rewriting semi-phase).
 
+Colons are optional to indicate a following suite at the end of an
+indentation-sensitive line. Indentation-sensitivity is disabled inside
+parentheses and square brackets. If inside a parenthesised expression,
+indentation-sensitivity can be reenabled with a colon at the end of a
+line:
+
+    a b (c d:
+          e
+          f)
+
+    = (a b (c d (block e f)))
+
+    a b (c d
+          e
+          f)
+
+    = (a b (c d e f))
+
+Conversely, long lines may be split up and logically continued over
+subsequent physical lines with a trailing `\`:
+
+    a b c \
+      d \
+      e
+
+    = (a b c d e)
+
 Semicolons may also appear in vertically-laid-out suites; these two
 are equivalent:
 
