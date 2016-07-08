@@ -1,6 +1,7 @@
 #lang racket/base
 
-(provide (rename-out [read-something-syntax read-syntax]))
+(provide (rename-out [read-something-syntax read-syntax])
+         read-toplevel-syntax)
 
 (require (only-in parser-tools/lex position-line position-col position-offset))
 (require syntax/strip-context)
@@ -57,3 +58,11 @@
   (strip-context
    #`(module something-module something/base
        #,@(map (lambda (f) #`(#%rewrite-infix #,(form->syntax src f))) forms))))
+
+(define (read-toplevel-syntax src [p (current-input-port)])
+  (define forms (read-something-toplevel p))
+  (if (null? forms)
+      eof
+      (strip-context
+       #`(begin
+           #,@(map (lambda (f) #`(#%rewrite-infix #,(form->syntax src f))) forms)))))

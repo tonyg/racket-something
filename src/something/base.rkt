@@ -19,7 +19,8 @@
                      unless
                      cond
                      module+
-                     if)
+                     if
+                     #%top-interaction)
          (except-out (all-from-out racket/match) match)
          #%seq
          block
@@ -48,7 +49,8 @@
                      [something-unless unless]
                      [something-cond cond]
                      [something-module+ module+]
-                     [something-if if]))
+                     [something-if if]
+                     [something-top-interaction #%top-interaction]))
 
 (require racket/match)
 (require (only-in racket/list split-at-right))
@@ -358,16 +360,22 @@
          (#,(syntax-shift-phase-level #'#%rewrite-infix 1) e)))]))
 
 (def-operator something-require #f prefix-macro something-require)
-(define-syntax (something-require stx parse)
-  (syntax-case stx (block)
-    [(_ (block v ...))
-     #'(require v ...)]))
+(define-syntax (something-require stx [parse #f])
+  ;; optional "parse", making this a dual macro, e.g. for support for
+  ;; simple .racketrc/interactive usage
+  (syntax-case stx (block require)
+    [(_ w ... (block v ...))
+     #'(require w ... v ...)]
+    [(_ w ...)
+     #'(require w ...)]))
 
 (def-operator something-provide #f prefix-macro something-provide)
-(define-syntax (something-provide stx parse)
+(define-syntax (something-provide stx [parse #f])
   (syntax-case stx (block)
-    [(_ (block v ...))
-     #'(provide v ...)]))
+    [(_ w ... (block v ...))
+     #'(provide w ... v ...)]
+    [(_ w ...)
+     #'(provide w ...)]))
 
 (def-operator something-match #f prefix-macro something-match)
 (define-syntax (something-match stx parse)
@@ -470,3 +478,8 @@
   (syntax-case stx (block)
     [(something-if test ... (block then else))
      (syntax/loc stx (if (#%rewrite-infix (test ...)) (#%rewrite-infix then) (#%rewrite-infix else)))]))
+
+(define-syntax (something-top-interaction stx)
+  (syntax-case stx ()
+    [(_ . form)
+     #'(#%rewrite-infix form)]))

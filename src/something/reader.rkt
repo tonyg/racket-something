@@ -4,6 +4,7 @@
          (struct-out namespaced-name)
 
          read-something-forms
+         read-something-toplevel
          token-comma?
 
          ;; For debugging:
@@ -154,6 +155,14 @@
   (if (eof-object? line)
       '()
       (cons line (read-something-lines p))))
+
+(define (read-something-lines-toplevel p)
+  (match (read-something-line p)
+    [(or (? eof-object?)
+         (list (token _ 'semicolon 'semicolon)))
+     '()]
+    [line
+     (cons line (read-something-lines-toplevel p))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Reading
@@ -325,6 +334,10 @@
 (define (read-something-forms [p (current-input-port)])
   (port-count-lines! p)
   (extract-forms (read-something-lines p)))
+
+(define (read-something-toplevel [p (current-input-port)])
+  (port-count-lines! p)
+  (extract-forms (read-something-lines-toplevel p)))
 
 (define (token-comma? e)
   (match e
