@@ -1,4 +1,4 @@
-racket-ohm: An Ohm-style parsing package.
+racket-something: Indentation-based Racket Syntax.
 Copyright (C) 2016 Tony Garnock-Jones <tonyg@leastfixedpoint.com>
 
 This program is free software: you can redistribute it and/or modify
