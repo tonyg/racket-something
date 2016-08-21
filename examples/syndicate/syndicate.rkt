@@ -26,55 +26,50 @@ def-syntax def-block-syntax stx
 
 def-block-syntax actor s_actor
 def-block-syntax run-ground s_run-ground
+def-block-syntax forever s_forever
+def-block-syntax react s_react
+def-block-syntax begin/dataflow s_begin/dataflow
+def-block-syntax on-start s_on-start
+def-block-syntax on-stop s_on-stop
 
-def-syntax forever stx
-  syntax-case stx [block]
-    _ (id init) ... (block body ...)
-      syntax (s_forever :collect ((id init) ...) body ...)
+def-syntax def-event-syntax stx
+  syntax-case stx []
+    _ outer-id inner-id
+      syntax (begin (def-operator outer-id #f prefix-macro outer-id)
+                    (def-syntax outer-id outer-stx parse:
+                      syntax-case outer-stx [block]:
+                        _ evt (... ...) (block body (... ...))
+                          (quasisyntax/loc outer-stx
+                            (inner-id (unsyntax (parse (syntax (evt (... ...)))))
+                                      (unsyntax-splicing
+                                       (map (syntax->list (syntax (body (... ...)))) parse))))
+                        _ evt (... ...)
+                          (quasisyntax/loc outer-stx
+                            (inner-id (unsyntax (parse (syntax (evt (... ...)))))))))
+
+def-event-syntax until s_until
+def-event-syntax during s_during
+def-event-syntax during/actor s_during/actor
+def-event-syntax on s_on
+def-event-syntax stop-when s_stop-when
+
+def-syntax field stx
+  syntax-case stx []
+    _ id (block init)
+      syntax (s_field (id init))
+
+def-syntax def/dataflow stx
+  syntax-case stx []
+    _ id (block init)
+      syntax (s_define/dataflow id init)
+
+def-operator ! 1100 prefix !
+def ! f: (f)
+
+def-operator <- 10 nonassoc <-
+def <- f v: f v
 
 def-operator !! 10 prefix !!
 def !! v: s_send! v
 
-begin-for-syntax
-  def rewrite-ongoing-clauses parse stx
-    let walk (stx stx)
-      syntax-case stx [block]
-        (:init (block expr ...)) rest ...
-          (quasisyntax (:init (('#%rewrite-infix' expr) ...)
-                        (unsyntax-splicing (walk (syntax (rest ...))))))
-        (:done (block expr ...)) rest ...
-          (quasisyntax (:done (('#%rewrite-infix' expr) ...)
-                        (unsyntax-splicing (walk (syntax (rest ...))))))
-        (:collect ((id init) ...)) rest ...
-          (quasisyntax (:collect ((id ('#%rewrite-infix' init)) ...)
-                        (unsyntax-splicing (walk (syntax (rest ...))))))
-        clause rest ...
-          (quasisyntax ((unsyntax (parse (syntax clause)))
-                        (unsyntax-splicing (walk (syntax (rest ...))))))
-        (: quasisyntax ())
-
-def-operator until #f prefix-macro until
-def-syntax until stx parse
-  syntax-case stx [block]
-    _ evt ... (block clause ...)
-      (quasisyntax/loc stx
-        (s_until (unsyntax (parse (syntax (evt ...))))
-                 (unsyntax-splicing (rewrite-ongoing-clauses parse (syntax (clause ...))))))
-    _ evt ...
-      (quasisyntax/loc stx (s_until (unsyntax (parse (syntax (evt ...))))))
-
-def-operator during #f prefix-macro during
-def-syntax during stx parse
-  syntax-case stx [block]
-    _ pat ... (block clause ...)
-      (quasisyntax/loc stx
-        (s_during (unsyntax (parse (syntax (pat ...))))
-                  (unsyntax-splicing (rewrite-ongoing-clauses parse (syntax (clause ...))))))
-
-def-operator on #f prefix-macro on
-def-syntax on stx parse
-  syntax-case stx [block]
-    _ evt ... (block expr ...)
-      (quasisyntax/loc stx
-        (s_on (unsyntax (parse (syntax (evt ...))))
-              ('#%rewrite-infix' expr) ...))
+def-operator $ 1100 prefix $

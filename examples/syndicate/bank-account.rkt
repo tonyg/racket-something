@@ -10,13 +10,14 @@ struct deposit [amount] :prefab
 
 run-ground
   actor
-    forever (balance 0)
-      assert (account balance)
+    react
+      field balance: 0
+      assert (account !balance)
       on message (deposit $amount)
-         balance + amount
+         balance <- !balance + amount
 
   actor
-    forever
+    react
       on asserted (account $balance)
          printf "Balance changed to ~a\n" balance
 
