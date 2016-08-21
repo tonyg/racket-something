@@ -43,20 +43,16 @@ run-ground
       printf "> "
       (flush-output)
 
-    def reader-count: 0
-    def (generate-reader-id)
-      def id: reader-count
-      set! reader-count (reader-count + 1)
-      id
-
     actor
+      field reader-count: 0
       (print-prompt)
       until message (inbound (external-event e [? eof-object? _]))
         on message (inbound (external-event e [? bytes? $bs]))
             match string-split (string-trim (bytes->string/utf-8 bs))
 
               ["open", name]:
-                def reader-id: (generate-reader-id)
+                def reader-id: !reader-count
+                reader-count <- !reader-count + 1
                 actor
                   printf "Reader ~a opening file ~v.\n" reader-id name
                   until message `(stop-watching ,name)
