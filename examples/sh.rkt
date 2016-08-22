@@ -42,7 +42,7 @@ def (ignore)
 ///////////////////////////////////////////////////////////////////////////
 // Simple demos
 
-ls -la | grep "^d" | fgrep -v "."
+ls -la $HOME | grep "^d" | fgrep -v "."
 
 pipeline
   ps -wwwax

@@ -20,6 +20,7 @@ provide
   pipeline
   pipe
   wait
+  getenv*
 
 def-syntax shell-app stx
   syntax-case stx []
@@ -130,6 +131,12 @@ def wait ch:
   match channel-get ch
     ? exn? e: raise e
     v: v
+
+def-operator $ 1100 prefix getenv*
+def-syntax getenv* stx
+  syntax-case stx []
+    _ id
+      (quasisyntax (getenv (unsyntax (symbol->string (syntax-e (syntax id))))))
 
 current-read-interaction read-toplevel-syntax
 
