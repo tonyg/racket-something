@@ -42,7 +42,7 @@ def-syntax def-event-syntax stx
                           (quasisyntax/loc outer-stx
                             (inner-id (unsyntax (parse (syntax (evt (... ...)))))
                                       (unsyntax-splicing
-                                       (map (syntax->list (syntax (body (... ...)))) parse))))
+                                       (map parse (syntax->list (syntax (body (... ...))))))))
                         _ evt (... ...)
                           (quasisyntax/loc outer-stx
                             (inner-id (unsyntax (parse (syntax (evt (... ...)))))))))

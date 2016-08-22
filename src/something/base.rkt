@@ -11,7 +11,6 @@
                      struct
                      syntax-case
                      with-syntax
-                     map
                      let
                      let*
                      letrec
@@ -43,7 +42,7 @@
                      [something-syntax-case syntax-case]
                      [something-with-syntax with-syntax]
                      [something-syntax syntax]
-                     [something-map map]
+                     [something-map map*]
                      [something-let let]
                      [something-let* let*]
                      [something-letrec letrec]

@@ -13,7 +13,7 @@ def-syntax my-match stx (parse #f)
         log-info "my-match ~v" (syntax->datum . stx)
         with-syntax { parsed-subject: parse (syntax (subject ...))
                       (parsed-match-pat ...):
-                        map (syntax->list . syntax ((match-pat ...) ...)) parse }
+                        map parse (syntax->list . syntax ((match-pat ...) ...)) }
           log-info "parsed-subject ~v" (syntax->datum . syntax parsed-subject)
           log-info "parsed-match-pats ~v" (syntax->datum . syntax (parsed-match-pat ...))
           syntax (base_match parsed-subject (parsed-match-pat ('#%rewrite-infix' body) ...) ...)

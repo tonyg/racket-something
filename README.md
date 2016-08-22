@@ -151,17 +151,20 @@ Forms starting with `block` in expression context expand into
         [(list pat1a pat1b) exp1a exp1b]
         [(list pat2a) exp2])
 
-The `map` function exported from `something/lang/implicit` differs
-from that of `racket/base` in that it takes its arguments in the
+The `map*` function exported from `something/lang/implicit` differs
+from `map` in `racket/base` in that it takes its arguments in the
 opposite order, permitting maps to be written
 
-    map [1, 2, 3, 4]
+    map* [1, 2, 3, 4]
       item:
         item + 1
 
-    map [1, 2, 3, 4]: item: item + 1
+    map* [1, 2, 3, 4]
+      item: item + 1
 
-    map [1, 2, 3, 4] { item: item + 1 }
+    map* [1, 2, 3, 4]: item: item + 1
+
+    map* [1, 2, 3, 4] { item: item + 1 }
 
 A nice consequence of all of the above is that curried functions have
 an interesting appearance:

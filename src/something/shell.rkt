@@ -69,7 +69,7 @@ def format-shell-argument a
     when string? a: a
     when symbol? a: symbol->string a
     when number? a: '~a' a
-    when list? a: map a format-shell-argument
+    when list? a: map format-shell-argument a
     else: error (quote format-shell-argument) "Cannot format ~v" a
 
 def-operator & 8 postfix run-in-background

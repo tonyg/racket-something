@@ -9,7 +9,7 @@ require
 
 def space-separated-columns (converters [])
   local-require racket/string
-  def header: map (string-split (read-line)) string->symbol
+  def header: map string->symbol (string-split (read-line))
   def nsplits: length header - 1
   def split-once s:
     match s
