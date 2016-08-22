@@ -1,7 +1,7 @@
 #lang something
 
 require
-  rename-in something ('#%app' base-app) ('#%top' base-top)
+  rename-in something ('#%app' base-app)
   only-in something/lang/reader read-toplevel-syntax
   racket/system
   racket/format
@@ -15,7 +15,7 @@ provide
   except-out (all-from-out something) '#%module-begin'
   rename-out ('#%plain-module-begin' '#%module-begin')
   all-from-out racket/port
-  rename-out (shell-app '#%app') (shell-top '#%top')
+  rename-out (shell-app '#%app')
   run-in-background
   pipeline
   pipe
@@ -31,12 +31,6 @@ def-syntax shell-app stx
     _ f arg ...
       identifier? (syntax f)
       build-command (syntax f) (syntax (arg ...))
-
-def-syntax shell-top stx
-  def id: stx-cdr stx
-  if identifier-binding id
-     datum->syntax stx (cons (syntax base-top) id)
-     build-command id (syntax ())
 
 begin-for-syntax
   def build-command id-stx args-stx
