@@ -13,6 +13,7 @@
 (def-operator - 60 left -)
 (def-operator * 70 left *)
 (def-operator / 70 left /)
+(def-operator ∘ 80 right compose)
 ;; (def-operator - 500 prefix -)
 ;; (def-operator + 500 prefix +)
 
