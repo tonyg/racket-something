@@ -20,7 +20,9 @@
                      cond
                      module+
                      if
-                     #%top-interaction)
+                     #%top-interaction
+                     with-handlers
+                     parameterize)
          (except-out (all-from-out racket/match) match)
          #%seq
          block
@@ -50,7 +52,9 @@
                      [something-cond cond]
                      [something-module+ module+]
                      [something-if if]
-                     [something-top-interaction #%top-interaction]))
+                     [something-top-interaction #%top-interaction]
+                     [something-with-handlers with-handlers]
+                     [something-parameterize parameterize]))
 
 (require racket/match)
 (require (only-in racket/list split-at-right))
@@ -487,3 +491,18 @@
   (syntax-case stx ()
     [(_ . form)
      #'(#%rewrite-infix form)]))
+
+(def-operator something-with-handlers #f prefix-macro something-with-handlers)
+(define-syntax (something-with-handlers stx [parse #f])
+  (syntax-case stx (block something-when)
+    [(_ (block (something-when test-proc id (block handler ...)) ... body))
+     (syntax/loc stx
+       (with-handlers [((#%rewrite-infix test-proc)
+                        (lambda (id) (#%rewrite-infix handler) ...)) ...]
+         (#%rewrite-infix body)))]))
+
+(define-syntax (something-parameterize stx)
+  (syntax-case stx (#%seq block)
+    [(_ (#%seq p ...) (block body ...))
+     (quasisyntax/loc stx
+       (parameterize (p ...) body ...))]))
