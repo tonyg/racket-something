@@ -32,13 +32,17 @@ provide
 def-syntax shell-app stx
   syntax-case stx []
     _ f arg ...
-      identifier? (syntax f) && identifier-binding (syntax f)
+      identifier? (syntax f) && bound-at-phase-0? (syntax f)
       (syntax (base-app f arg ...))
     _ f arg ...
       identifier? (syntax f)
       build-command (syntax f) (syntax (arg ...))
 
 begin-for-syntax
+  def bound-at-phase-0? id-stx
+    identifier-binding id-stx || \
+      (procedure-arity-includes? identifier-binding 3 && identifier-binding id-stx 0 #t)
+
   def build-command id-stx args-stx
     with-syntax { command: symbol->string (syntax-e id-stx)
                   (arg ...): args-stx }
