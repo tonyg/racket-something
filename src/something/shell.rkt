@@ -6,7 +6,9 @@ require
   racket/system
   racket/format
   only-in racket/list flatten
+
   racket/port
+  racket/string
 
   for-syntax something
   for-syntax syntax/stx
@@ -14,11 +16,15 @@ require
 provide
   except-out (all-from-out something) '#%module-begin'
   rename-out ('#%plain-module-begin' '#%module-begin')
+
   all-from-out racket/port
+  all-from-out racket/string
+
   rename-out (shell-app '#%app')
   run-in-background
   pipeline
   pipe
+  rev-apply
   wait
   getenv*
   read-lines
@@ -126,6 +132,15 @@ def wait ch:
   match channel-get ch
     ? exn? e: raise e
     v: v
+
+def-operator |> 10 left rev-apply
+def-syntax rev-apply stx
+  syntax-case stx []
+    _ v id
+      identifier? (syntax id)
+      (syntax (id v))
+    _ v (f arg ...)
+      (syntax (f arg ... v))
 
 def-operator $ 1100 prefix getenv*
 def-syntax getenv* stx

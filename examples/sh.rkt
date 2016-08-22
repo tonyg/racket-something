@@ -44,6 +44,9 @@ def (ignore)
 
 ls -la $HOME | grep "^d" | fgrep -v "."
 
+ls -la | wc -l | read-line |> string-split |> car |> string->number |> \
+  printf "There are ~a lines here." | sed -e "s: are : seem to be :"
+
 pipeline
   ps -wwwax
   preserve-header 1 {: grep "racket" }
