@@ -136,12 +136,14 @@
        [(list* #\\ x rest) (cons x (loop rest))]
        [(list* x rest) (cons x (loop rest))]))))
 
-(define (read-something-line p)
+(define (read-something-line p #:blank-line-is-eof? [blank-line-is-eof? #f])
   (let loop ((tokens-rev '()))
     (match (read-token p)
       ['newline
        (if (null? tokens-rev)
-           (loop '()) ;; we skip whitespace-only lines
+           (if blank-line-is-eof?
+               eof
+               (loop '())) ;; we skip whitespace-only lines
            (reverse tokens-rev))]
       [token
        (if (eof-object? token)
@@ -157,12 +159,13 @@
       (cons line (read-something-lines p))))
 
 (define (read-something-lines-toplevel p)
-  (match (read-something-line p)
-    [(or (? eof-object?)
-         (list (token _ 'semicolon 'semicolon)))
-     '()]
-    [line
-     (cons line (read-something-lines-toplevel p))]))
+  (let read-more-lines ((acc '()))
+    (match (read-something-line p #:blank-line-is-eof? (pair? acc))
+      [(or (? eof-object?)
+           (list (token _ 'semicolon 'semicolon)))
+       (reverse acc)]
+      [line
+       (read-more-lines (cons line acc))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Reading
