@@ -40,11 +40,10 @@ def-syntax shell-app stx
 
 begin-for-syntax
   def build-command id-stx args-stx
-    def command: symbol->string (syntax-e id-stx)
-    with-syntax { (arg ...): args-stx }
-      quasisyntax (apply system*/exit-code
-                         (find-command (unsyntax command))
-                         (flatten (list (parse-shell-argument arg) ...)))
+    with-syntax { command: symbol->string (syntax-e id-stx)
+                  (arg ...): args-stx }
+      syntax (apply system*/exit-code (find-command (quote command))
+                                      (flatten (list (parse-shell-argument arg) ...)))
 
 def find-command command-name:
   or (find-executable-path command-name) \
