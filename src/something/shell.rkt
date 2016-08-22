@@ -21,6 +21,7 @@ provide
   pipe
   wait
   getenv*
+  read-lines
 
 def-syntax shell-app stx
   syntax-case stx []
@@ -137,6 +138,9 @@ def-syntax getenv* stx
   syntax-case stx []
     _ id
       (quasisyntax (getenv (unsyntax (symbol->string (syntax-e (syntax id))))))
+
+def read-lines (p (current-input-port))
+  for/list ((line (in-lines p))) line
 
 current-read-interaction read-toplevel-syntax
 
