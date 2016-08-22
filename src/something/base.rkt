@@ -56,6 +56,7 @@
 (require (only-in racket/list split-at-right))
 
 (require (for-syntax racket))
+(require (for-syntax syntax/stx))
 (require (for-syntax syntax/id-table))
 (require (for-syntax "pratt.rkt"))
 (require (for-syntax syntax/srcloc))
@@ -78,10 +79,13 @@
 (define-syntax (partial-app stx)
   (raise-syntax-error #f "Internal error: partially-built application escaped #%rewrite-infix" stx))
 
+(define-for-syntax (->syntax ctx sexp)
+  (datum->syntax ctx sexp ctx))
+
 (define-for-syntax (finalize-app stx)
   (syntax-case stx (partial-app)
-    [(partial-app val ...)
-     (syntax/loc stx (val ...))]
+    [(partial-app . vals)
+     #'vals]
     [_
      stx]))
 
@@ -96,12 +100,12 @@
         (and (identifier? #'special-id)
              (or (free-identifier=? #'special-id #'block)
                  (free-identifier=? #'special-id #'#%seq)))
-        (quasisyntax/loc stx (special-id #,@(map rewrite-infix (syntax->list #'(body ...)))))]
+        (->syntax stx (cons #'special-id (map rewrite-infix (syntax->list #'(body ...)))))]
        [(piece)
-        (quasisyntax/loc stx (#,(rewrite-infix #'piece)))]
-       [(pieces ...)
-        ;; (quasisyntax/loc stx (#,@(map rewrite-infix (syntax->list #'(pieces ...)))))
-        (let ((result (pratt-parse (syntax->list #'(pieces ...))
+        (->syntax stx (list (rewrite-infix #'piece)))]
+       [pieces
+        (stx-pair? #'pieces)
+        (let ((result (pratt-parse (syntax->list #'pieces)
                                    (operator-table '(prefix prefix-macro))
                                    (operator-table '(postfix))
                                    (operator-table '(left right nonassoc n-ary))
@@ -110,10 +114,10 @@
                                    (lambda (stx parse) (rewrite-infix stx))
                                    (lambda (left right)
                                      (syntax-case left (partial-app)
-                                       [(partial-app x ...)
-                                        (quasisyntax/loc left (partial-app x ... #,right))]
+                                       [(partial-app . xs)
+                                        (->syntax left `(,#'partial-app ,@(syntax->list #'xs) ,right))]
                                        [_
-                                        (quasisyntax/loc left (partial-app #,left #,right))]))
+                                        (->syntax left `(,#'partial-app ,left ,right))]))
                                    (lambda () eof))))
           (if (eof-object? result)
               #''()
@@ -142,14 +146,14 @@
                (finalize-binary-subterms
                 (lambda (op-stx left right _raw-left)
                   (if (eof-object? right)
-                      (quasisyntax/loc left (#,left #,op-stx))
-                      (quasisyntax/loc left (#,handler-stx #,left #,right)))))]
+                      (->syntax left (list left op-stx))
+                      (->syntax handler-stx (list handler-stx left right)))))]
               [(nonassoc)
                (finalize-binary-subterms
                 (lambda (op-stx left right raw-left)
                   (if (eof-object? right)
-                      (quasisyntax/loc left (#,left #,op-stx))
-                      (let ((result (quasisyntax/loc left (#,handler-stx #,left #,right))))
+                      (->syntax left (list left op-stx))
+                      (let ((result (->syntax left (list handler-stx left right))))
                         (syntax-case raw-left ()
                           [(op _ _)
                            (same-binding-power? #'op binding-power)
@@ -171,7 +175,7 @@
                                              (format "Missing n-ary argument to operator ~a"
                                                      (syntax-e op-stx))
                                              left)
-                         (quasisyntax/loc left (op args ... #,right)))]
+                         (->syntax left `(,handler-stx ,@(syntax->list #'(args ...)) ,right)))]
                     [(op args ...)
                      (same-binding-power? #'op binding-power)
                      (raise-syntax-error
@@ -179,14 +183,14 @@
                       (format "Cannot chain non-associative operators ~a and ~a"
                               (syntax-e op-stx)
                               (syntax-e #'op))
-                      (quasisyntax/loc left (#,handler-stx #,left #,right)))]
+                      (->syntax left (list handler-stx left right)))]
                     [_
                      (if (eof-object? right)
-                         (quasisyntax/loc left (#,left #,op-stx))
-                         (quasisyntax/loc left (#,handler-stx #,left #,right)))])))]
+                         (->syntax left (list left op-stx))
+                         (->syntax left (list handler-stx left right)))])))]
               [(prefix-macro)
                (lambda (op-stx parse tokens)
-                 (define tokens-stx (quasisyntax/loc op-stx (#,handler-stx #,@tokens)))
+                 (define tokens-stx (->syntax op-stx (cons handler-stx tokens)))
                  (when (not (macro? handler-stx))
                    (raise-syntax-error #f
                                        (format "parser-macro handler is not a macro ~a"
@@ -209,7 +213,7 @@
               [(prefix postfix)
                (finalize-unary-subterm
                 (lambda (op-stx v)
-                  (quasisyntax/loc v (#,handler-stx #,v))))])))
+                  (->syntax v (list handler-stx v))))])))
 
 (define-for-syntax (define-operator! id-stx binding-power-stx associativity-stx handler-stx)
   (define binding-power (syntax-e binding-power-stx))
@@ -288,7 +292,7 @@
   (define result
     (syntax-case stx ()
       [(_ token) (rewrite-infix #'token)]
-      [(_ token ...) (rewrite-infix (syntax/loc stx (token ...)))]))
+      [(_ . tokens) (rewrite-infix #'tokens)]))
   ;; (log-info "<-- #%rewrite-infix(~v) ~v" (syntax-local-phase-level) (syntax->datum result))
   result)
 
