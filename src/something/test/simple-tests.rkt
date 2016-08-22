@@ -18,7 +18,7 @@ def check-output expected-output expected-logging f
   def-values actual-output actual-logging:
     def o: (open-output-string)
     def l: (open-output-string)
-    parameterize ((current-output-port o)) (with-logging-to-port l f `info)
+    parameterize [current-output-port o]: with-logging-to-port l f `info
     values (get-output-string o) (get-output-string l)
   check-equal? (string-split actual-output "\n") expected-output
   check-equal? (string-split actual-logging "\n") expected-logging
