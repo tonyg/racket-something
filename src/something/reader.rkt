@@ -39,7 +39,7 @@
                         "\\t"
                         (:: "\\u" c:hex-digit c:hex-digit c:hex-digit c:hex-digit)
                         (:: "\\x" c:hex-digit c:hex-digit))]
-  [c:symbol-start (:or alphabetic "_" "*" "+")] ;; this is getting silly
+  [c:symbol-start (:or alphabetic "_" "*" "+" "-")] ;; this is getting silly
   [c:symbol-inner (:or c:symbol-start numeric c:punctuation)]
   [c:symbol-end (:or c:symbol-start numeric "!" "?")]
   [c:symbol-normal (:: c:symbol-start (:? (:: (:* c:symbol-inner) c:symbol-end)))]
