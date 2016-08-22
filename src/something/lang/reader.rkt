@@ -53,10 +53,10 @@
        (->syntax val pos)]))
   (walk t))
 
-(define (read-something-syntax src [p (current-input-port)])
+(define (read-something-syntax src [p (current-input-port)] #:language [language #'something/base])
   (define forms (read-something-forms p))
   (strip-context
-   #`(module something-module something/base
+   #`(module something-module #,language
        #,@(map (lambda (f) #`(#%rewrite-infix #,(form->syntax src f))) forms))))
 
 (define (read-toplevel-syntax src [p (current-input-port)])
