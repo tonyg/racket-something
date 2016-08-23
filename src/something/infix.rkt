@@ -4,6 +4,7 @@
 
 (def-operator \|\| 20 right or)
 (def-operator && 30 right and)
+(def-operator == 40 nonassoc equal?)
 (def-operator = 40 nonassoc =)
 (def-operator < 40 nonassoc <)
 (def-operator <= 40 nonassoc <=)
