@@ -9,6 +9,7 @@ require
 
   racket/port
   racket/string
+  tabular
 
   for-syntax something
   for-syntax syntax/stx
@@ -19,15 +20,21 @@ provide
 
   all-from-out racket/port
   all-from-out racket/string
+  all-from-out tabular
 
   rename-out (shell-app '#%app')
   run-in-background
   pipeline
   pipe
   rev-apply
+  rev-apply*
   wait
   getenv*
+
   read-lines
+  discard
+  preserve-header
+  space-separated-columns
 
 def-syntax shell-app stx
   syntax-case stx []
@@ -99,13 +106,21 @@ def-syntax ensure stx
                 (begin0 (begin body ...) finally-expr))
 
 def-syntax pipeline stx
-  syntax-case stx [block]
+  syntax-case stx [block, '|>', '|<']
     _ (block)
       (syntax (copy-port (current-input-port) (current-output-port)))
     _ (block final-stage)
       (syntax final-stage)
-    _ (block stage0 stage ...)
-      (syntax (pipe stage0 (pipeline (block stage ...))))
+    _ (block stage ... ('|>' final-stage))
+      (syntax (rev-apply (pipeline (block stage ...)) final-stage))
+    _ (block stage ... ('|>' final-stage ...))
+      (syntax (rev-apply (pipeline (block stage ...)) (final-stage ...)))
+    _ (block stage ... ('|<' final-stage))
+      (syntax (rev-apply* (pipeline (block stage ...)) final-stage))
+    _ (block stage ... ('|<' final-stage ...))
+      (syntax (rev-apply* (pipeline (block stage ...)) (final-stage ...)))
+    _ (block stage ... final-stage)
+      (syntax (pipe (pipeline (block stage ...)) final-stage))
 
 def-operator | 10 left pipe
 def-syntax pipe stx
@@ -137,22 +152,29 @@ def wait ch:
     v: v
 
 def-operator |> 10 left rev-apply
+def-operator |< 10 left rev-apply*
+
 def-syntax rev-apply stx
   syntax-case stx []
     _ v id
       identifier? (syntax id)
-      (syntax (id v))
+      syntax (id v)
     _ v (f arg ...)
-      (syntax (f arg ... v))
+      syntax (f arg ... v)
+
+def-syntax rev-apply* stx
+  syntax-case stx []
+    _ v id
+      identifier? (syntax id)
+      syntax (id v)
+    _ v (f arg ...)
+      syntax (f v arg ...)
 
 def-operator $ 1100 prefix getenv*
 def-syntax getenv* stx
   syntax-case stx []
     _ id
       (quasisyntax (getenv (unsyntax (symbol->string (syntax-e (syntax id))))))
-
-def read-lines (p (current-input-port))
-  for/list ((line (in-lines p))) line
 
 current-read-interaction read-toplevel-syntax
 
@@ -165,3 +187,36 @@ module+ reader
 
   def read-shell-syntax src p
     read-syntax src p :language (syntax something/shell)
+
+///////////////////////////////////////////////////////////////////////////
+// Sketches of utilities
+
+def read-lines (p (current-input-port))
+  for/list ((line (in-lines p))) line
+
+def (discard)
+  for ((line (in-lines))) (void)
+
+def ((preserve-header nlines thunk))
+  for ((n (in-range nlines))) (displayln (read-line))
+  (thunk)
+
+def space-separated-columns (converters [])
+  local-require racket/string
+  def header: map string->symbol (string-split (read-line))
+  def nsplits: length header - 1
+  def split-once s:
+    match s
+      pregexp "^\\s*(\\S+)\\s+(\\S.*)?$" [_, h, t]: values h t
+      _: values s #f
+  def split-line line n converters:
+    if zero? n
+       match converters
+         []: list line
+         cons c _: list ((c || values) line)
+       let
+         def-values h t: split-once line
+         match converters
+           []:       cons                h  (split-line t (n - 1) [])
+           cons c r: cons ((c || values) h) (split-line t (n - 1) r )
+  cons header (for/list ((line (in-lines))) (split-line line nsplits converters))
