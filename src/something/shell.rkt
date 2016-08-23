@@ -174,8 +174,9 @@ def-syntax rev-apply* stx
 def-operator $ 1100 prefix getenv*
 def-syntax getenv* stx
   syntax-case stx []
-    _ (e ...)
-      (quasisyntax (pipe (e ...) (port->string)))
+    _ exp
+      stx-pair? (syntax exp)
+      (quasisyntax (pipe exp (compose string-trim port->string)))
     _ id
       identifier? (syntax id)
       (quasisyntax (getenv (unsyntax (symbol->string (syntax-e (syntax id))))))
