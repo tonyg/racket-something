@@ -170,10 +170,14 @@ def-syntax rev-apply* stx
     _ v (f arg ...)
       syntax (f v arg ...)
 
+// Double-duty $id is an environment variable reference, and $(id) is an output capture
 def-operator $ 1100 prefix getenv*
 def-syntax getenv* stx
   syntax-case stx []
+    _ (e ...)
+      (quasisyntax (pipe (e ...) (port->string)))
     _ id
+      identifier? (syntax id)
       (quasisyntax (getenv (unsyntax (symbol->string (syntax-e (syntax id))))))
 
 current-read-interaction read-toplevel-syntax
