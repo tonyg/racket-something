@@ -8,6 +8,7 @@ require
   only-in racket/list flatten
 
   racket/port
+  racket/file
   racket/string
   tabular
 
@@ -19,6 +20,7 @@ provide
   rename-out ('#%plain-module-begin' '#%module-begin')
 
   all-from-out racket/port
+  all-from-out racket/file
   all-from-out racket/string
   all-from-out tabular
 
