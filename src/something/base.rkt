@@ -31,6 +31,7 @@
          dump-operator-table!
          #%rewrite-infix
          #%no-infix
+         rec
          (rename-out [something-define def]
                      [something-define-values def-values]
                      [something-begin-for-syntax begin-for-syntax]
@@ -446,6 +447,11 @@
 (define-syntax (something-let stx) (expand-let-like #'let stx))
 (define-syntax (something-let* stx) (expand-let-like #'let* stx))
 (define-syntax (something-letrec stx) (expand-let-like #'letrec stx))
+
+(define-syntax (rec stx)
+  (syntax-case stx (block)
+    [(rec id (block body ...))
+     (syntax/loc stx (letrec ((id (block body ...))) id))]))
 
 (def-operator something-when #f prefix-macro something-when)
 (define-syntax (something-when stx parse)
