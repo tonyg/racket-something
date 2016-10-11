@@ -25,6 +25,7 @@ def-syntax def-block-syntax stx
                     syntax (inner-id body (... ...)))
 
 def-block-syntax actor s_actor
+def-block-syntax actor* s_actor*
 def-block-syntax run-ground s_run-ground
 def-block-syntax forever s_forever
 def-block-syntax react s_react
