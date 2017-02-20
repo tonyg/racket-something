@@ -24,8 +24,8 @@ def-syntax def-block-syntax stx
                   _ (block body (... ...))
                     syntax (inner-id body (... ...)))
 
-def-block-syntax actor s_actor
-def-block-syntax actor* s_actor*
+def-block-syntax spawn s_spawn
+def-block-syntax spawn* s_spawn*
 def-block-syntax run-ground s_run-ground
 def-block-syntax forever s_forever
 def-block-syntax react s_react
@@ -50,7 +50,7 @@ def-syntax def-event-syntax stx
 
 def-event-syntax until s_until
 def-event-syntax during s_during
-def-event-syntax during/actor s_during/actor
+def-event-syntax during/spawn s_during/spawn
 def-event-syntax on s_on
 def-event-syntax stop-when s_stop-when
 

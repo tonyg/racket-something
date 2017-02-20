@@ -9,13 +9,13 @@ require
 struct envelope [destination, message] :prefab
 
 run-ground
-    actor: on message (envelope `alice $message)
+    spawn: on message (envelope `alice $message)
                log-info "Alice received ~v" message
 
-    actor: on message (envelope `bob $message)
+    spawn: on message (envelope `bob $message)
                log-info "Bob received ~v" message
 
-    actor*
+    spawn*
         log-info "Waiting for Alice and Bob."
         until asserted (observe (envelope `alice _))
         until asserted (observe (envelope `bob _))

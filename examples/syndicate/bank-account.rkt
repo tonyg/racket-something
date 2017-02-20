@@ -9,17 +9,17 @@ struct account [balance] :prefab
 struct deposit [amount] :prefab
 
 run-ground
-    actor
+    spawn
         field balance: 0
         assert (account !balance)
         on message (deposit $amount)
              balance <- !balance + amount
 
-    actor
+    spawn
         on asserted (account $balance)
              printf "Balance changed to ~a\n" balance
 
-    actor*
+    spawn*
         until asserted (observe (deposit _))
         !! deposit +100
         !! deposit -30

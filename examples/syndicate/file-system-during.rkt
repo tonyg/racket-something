@@ -22,7 +22,7 @@ def sleep sec
 run-ground
     (spawn-timer-driver)
 
-    actor
+    spawn
         field files: (hash)
         during observe (file $name _)
             on-start: printf "At least one reader exists for ~v\n" name
@@ -35,7 +35,7 @@ run-ground
         on message (delete $name): files <- hash-remove !files name
 
     // Shell
-    actor
+    spawn
         field reader-count: 0
         on-start: (print-prompt)
 
@@ -53,7 +53,7 @@ run-ground
                 ["open", name]:
                     def reader-id: !reader-count
                     reader-count <- !reader-count + 1
-                    actor
+                    spawn
                         on-start: printf "Reader ~a opening file ~v.\n" reader-id name
                         stop-when message `(stop-watching ,name)
                         on asserted (file name $contents)
