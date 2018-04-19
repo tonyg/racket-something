@@ -1,4 +1,4 @@
-# Indentation-based Racket Syntax
+# Indentation-based Racket Syntax with Macros and Infix Operators
 
 Not [sweet-exps](http://readable.sourceforge.net/) (see Asumu's
 [racket implementation](https://github.com/takikawa/sweet-racket)).
