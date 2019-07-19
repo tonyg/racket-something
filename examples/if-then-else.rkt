@@ -8,9 +8,9 @@ require
   prefix-in base_ racket/base
   for-syntax something/base
 
-def-operator IF #f statement-macro IF
-def-syntax IF stx
-  syntax-case stx [ELSE, ELIF, block]
+def-operator IF #f statement-macro IF-statement
+def-syntax IF-statement stx
+  syntax-case stx [ELSE, block]
     _ (_IF test (block true-exps ...)) (ELSE (block false-exps ...)) more ...
       syntax ('#%rewrite-body'
               (base_cond (test ('#%rewrite-body' true-exps ...))
@@ -20,6 +20,15 @@ def-syntax IF stx
       syntax ('#%rewrite-body'
               (base_when test ('#%rewrite-body' true-exps ...))
               more ...)
+    _ (_IF pieces ...) more ...
+      syntax ('#%rewrite-body' (begin (IF pieces ...)) more ...)
+
+def-syntax IF stx
+  syntax-case stx [ELSE, block]
+    _ test (block true-exps ...) ELSE (block false-exps ...)
+      syntax (base_if test ('#%rewrite-body' true-exps ...) ('#%rewrite-body' false-exps ...))
+    _ test (block true-exps ...)
+      syntax (base_when test ('#%rewrite-body' true-exps ...))
 
 module+ main
 
@@ -38,3 +47,7 @@ module+ main
 
   IF is_magic
      printf "But you did say 'magic'!\n"
+
+  IF is_magic { printf "✓\n" } ELSE { printf "✗\n" }
+  displayln (IF (word == "1") { "✓" } ELSE { "✗" })
+  displayln (IF (word == "1") { "✓" })
