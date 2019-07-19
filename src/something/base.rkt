@@ -30,6 +30,7 @@
          get-operator-table!
          dump-operator-table!
          #%rewrite-infix
+         #%rewrite-body
          #%no-infix
          rec
          (rename-out [something-define def]
@@ -71,7 +72,8 @@
   (begin ;; (log-info "creating fresh operator table")
          (make-free-id-table)))
 
-(define-for-syntax valid-associativities '(prefix prefix-macro postfix left right nonassoc n-ary))
+(define-for-syntax valid-associativities
+  '(prefix prefix-macro postfix left right nonassoc n-ary statement-macro))
 
 (define-for-syntax (macro? stx)
   (and (identifier? stx)
@@ -217,13 +219,16 @@
               [(prefix postfix)
                (finalize-unary-subterm
                 (lambda (op-stx v)
-                  (->syntax v (list handler-stx v))))])))
+                  (->syntax v (list handler-stx v))))]
+              [(statement-macro)
+               (lambda (stx)
+                 (->syntax stx (cons handler-stx stx)))])))
 
 (define-for-syntax (define-operator! id-stx binding-power-stx associativity-stx handler-stx)
   (define binding-power (syntax-e binding-power-stx))
   (define associativity (syntax-e associativity-stx))
   (case associativity
-    [(prefix-macro)
+    [(prefix-macro statement-macro)
      (when (not (eq? binding-power #f))
        (raise-syntax-error #f
                            (format "Binding power for prefix-macro must be #f; got ~v" binding-power)
@@ -244,7 +249,8 @@
     (case associativity
       [(prefix prefix-macro) '(prefix prefix-macro)]
       [(postfix) '(postfix)]
-      [(left right nonassoc n-ary) '(left right nonassoc n-ary)]))
+      [(left right nonassoc n-ary) '(left right nonassoc n-ary)]
+      [(statement-macro) '(statement-macro)]))
   (define existing-set
     (for/set [(op (in-set (free-id-table-ref operators id-stx set)))
               #:when (not (memq (operator-associativity op) associativities-to-clear))]
@@ -300,6 +306,24 @@
   ;; (log-info "<-- #%rewrite-infix(~v) ~v" (syntax-local-phase-level) (syntax->datum result))
   result)
 
+(define-syntax (#%rewrite-body stx)
+  (define statement-macro-table (operator-table '(statement-macro)))
+  ;; (log-info "#%rewrite-body(~v) --> ~v" (syntax-local-phase-level) stx)
+  (define result
+    (syntax-case stx ()
+      [(_ (id e ...) more ...)
+       (statement-macro-table #'id)
+       (let ((op (statement-macro-table #'id))) ;; TODO: avoid redundant lookup
+         ((operator-handler op) #'((id e ...) more ...)))]
+      [(_)
+       #'(begin)]
+      [(_ e)
+       #'(#%rewrite-infix e)]
+      [(_ e more ...)
+       #'(begin (#%rewrite-infix e) (#%rewrite-body more ...))]))
+  ;; (log-info "<-- #%rewrite-body(~v) ~v" (syntax-local-phase-level) (syntax->datum result))
+  result)
+
 (define-syntax (def-operator stx [parse #f]) ;; optional parse -> can be used in both contexts
   (syntax-case stx ()
     [(_ id binding-power associativity handler)
@@ -323,9 +347,9 @@
                     (map (lambda (clause-stx)
                            (syntax-case clause-stx (block)
                              [(pat ... (block body ...))
-                              #'[(list pat ...) body ...]]
+                              #'[(list pat ...) (#%rewrite-body body ...)]]
                              [(block body ...)
-                              #'[(list) body ...]]))
+                              #'[(list) (#%rewrite-body body ...)]]))
                          (syntax->list #'(clause ...)))])
        #'(match-lambda* transformed-clause ...))]))
 
@@ -337,31 +361,30 @@
 (define-syntax (something-define stx [parse #f])
   (syntax-case stx (block)
     [(_ (f v ...) (block body ...))
-     #'(define (f v ...) (#%rewrite-infix body) ...)]
+     #'(define (f v ...) (#%rewrite-body body ...))]
     [(_ f v0 v ... (block body ...))
-     #'(define (f v0 v ...) (#%rewrite-infix body) ...)]
+     #'(define (f v0 v ...) (#%rewrite-body body ...))]
     [(_ v (block e))
      #'(define v (#%rewrite-infix e))]))
 
 (define-syntax (something-define-values stx)
   (syntax-case stx (block)
     [(_ var ... (block body ...))
-     #'(define-values (var ...) (let () body ...))]))
+     #'(define-values (var ...) (let () (#%rewrite-body body ...)))]))
 
 (def-operator something-begin-for-syntax #f prefix-macro something-begin-for-syntax)
-(define-syntax (something-begin-for-syntax stx parse)
+(define-syntax (something-begin-for-syntax stx [parse #f])
   (syntax-case stx (block)
     [(_ (block body ...))
      (quasisyntax/loc stx
-       (begin-for-syntax (#,(syntax-shift-phase-level #'#%rewrite-infix 1) body) ...))]))
+       (begin-for-syntax (#,(syntax-shift-phase-level #'#%rewrite-body 1) body ...)))]))
 
 (def-operator something-define-syntax #f prefix-macro something-define-syntax)
 (define-syntax (something-define-syntax stx [parse #f])
   (syntax-case stx (block)
     [(_ f v0 v ... (block body ...))
      (quasisyntax/loc stx
-       (define-syntax (f v0 v ...)
-         (#,(syntax-shift-phase-level #'#%rewrite-infix 1) body) ...))]
+       (define-syntax (f v0 v ...) (#,(syntax-shift-phase-level #'#%rewrite-body 1) body ...)))]
     [(_ v e)
      (quasisyntax/loc stx
        (define-syntax v
@@ -394,7 +417,7 @@
                    (syntax-case clause-stx ()
                      [((p ...) (body ...))
                       #`[#,(parse #'(p ...))
-                         (#%rewrite-infix body) ...]]))
+                         (#%rewrite-body body ...)]]))
                  (syntax->list #'([(pat-piece ...) (body ...)] ...))))]))
 
 (define-syntax (something-struct stx)
@@ -424,7 +447,7 @@
 (define-syntax (something-with-syntax stx parse)
   (syntax-case stx (block)
     [(_ (block (pattern (block stx-expr)) ...) (block body ...))
-     #'(with-syntax ([pattern (#%rewrite-infix stx-expr)] ...) (#%rewrite-infix body) ...)]))
+     #'(with-syntax ([pattern (#%rewrite-infix stx-expr)] ...) (#%rewrite-body body ...))]))
 
 (def-operator something-syntax #f prefix-macro something-syntax)
 (define-syntax (something-syntax stx parse)
@@ -440,9 +463,9 @@
   (syntax-case expr-stx (block)
     [(_ loop (name init) ... (block body ...))
      (identifier? #'loop)
-     #`(#,kind-stx loop ((name init) ...) body ...)]
+     #`(#,kind-stx loop ((name init) ...) (#%rewrite-body body ...))]
     [(_ (name init) ... (block body ...))
-     #`(#,kind-stx ((name init) ...) body ...)]))
+     #`(#,kind-stx ((name init) ...) (#%rewrite-body body ...))]))
 
 (define-syntax (something-let stx) (expand-let-like #'let stx))
 (define-syntax (something-let* stx) (expand-let-like #'let* stx))
@@ -457,34 +480,34 @@
 (define-syntax (something-when stx parse)
   (syntax-case stx (block)
     [(something-when test ... (block body ...))
-     (syntax/loc stx (when (#%rewrite-infix test ...) (#%rewrite-infix body) ...))]))
+     (syntax/loc stx (when (#%rewrite-infix test ...) (#%rewrite-body body ...)))]))
 
 (def-operator something-unless #f prefix-macro something-unless)
 (define-syntax (something-unless stx parse)
   (syntax-case stx (block)
     [(something-unless test ... (block body ...))
-     (syntax/loc stx (unless (#%rewrite-infix test ...) (#%rewrite-infix body) ...))]))
+     (syntax/loc stx (unless (#%rewrite-infix test ...) (#%rewrite-body body ...)))]))
 
 (def-operator something-cond #f prefix-macro something-cond)
 (define-syntax (something-cond stx parse)
   (syntax-case stx (block something-when something-unless else)
     [(_ (block (something-when test ... (block body ...)) clauses ...))
      (syntax/loc stx (if (#%rewrite-infix test ...)
-                         (begin (#%rewrite-infix body) ...)
+                         (#%rewrite-body body ...)
                          (#%rewrite-infix (something-cond (block clauses ...)))))]
     [(_ (block (something-unless test ... (block body ...)) clauses ...))
      (syntax/loc stx (if (not (#%rewrite-infix test ...))
-                         (begin (#%rewrite-infix body) ...)
+                         (#%rewrite-body body ...)
                          (#%rewrite-infix (something-cond (block clauses ...)))))]
     [(_ (block (else (block body ...))))
-     (syntax/loc stx (begin (#%rewrite-infix body) ...))]
+     (syntax/loc stx (#%rewrite-body body ...))]
     [(_ (block))
      (raise-syntax-error #f "cond: no matching clause" stx)]))
 
 (define-syntax (something-module+ stx)
   (syntax-case stx (block)
     [(something-module+ modname (block body ...))
-     (syntax/loc stx (module+ modname body ...))]))
+     (syntax/loc stx (module+ modname (#%rewrite-body body ...)))]))
 
 (def-operator something-if #f prefix-macro something-if)
 (define-syntax (something-if stx parse)
@@ -503,11 +526,11 @@
     [(_ (block (something-when test-proc id (block handler ...)) ... body))
      (syntax/loc stx
        (with-handlers [((#%rewrite-infix test-proc)
-                        (lambda (id) (#%rewrite-infix handler) ...)) ...]
+                        (lambda (id) (#%rewrite-body handler ...))) ...]
          (#%rewrite-infix body)))]))
 
 (define-syntax (something-parameterize stx)
   (syntax-case stx (#%seq block)
     [(_ (#%seq p ...) (block body ...))
      (quasisyntax/loc stx
-       (parameterize (p ...) body ...))]))
+       (parameterize (p ...) (#%rewrite-body body ...)))]))

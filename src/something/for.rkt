@@ -17,7 +17,7 @@ begin-for-syntax
   def expand-for base-stx stx
     syntax-case stx [block]
       _ (block (v (block exp)) ...) (block body ...)
-        (quasisyntax ((unsyntax base-stx) ((v exp) ...) body ...))
+        (quasisyntax ((unsyntax base-stx) ((v exp) ...) ('#%rewrite-body' body ...)))
 
 def-syntax for stx: expand-for (syntax base_for) stx
 def-syntax for* stx: expand-for (syntax base_for*) stx

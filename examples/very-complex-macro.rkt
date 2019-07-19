@@ -16,7 +16,7 @@ def-syntax my-match stx (parse #f)
                         map parse (syntax->list . syntax ((match-pat ...) ...)) }
           log-info "parsed-subject ~v" (syntax->datum . syntax parsed-subject)
           log-info "parsed-match-pats ~v" (syntax->datum . syntax (parsed-match-pat ...))
-          syntax (base_match parsed-subject (parsed-match-pat ('#%rewrite-infix' body) ...) ...)
+          syntax (base_match parsed-subject (parsed-match-pat ('#%rewrite-body' body ...)) ...)
 
 def-operator slurp1 #f prefix-macro slurp1
 def-syntax slurp1 stx parse
