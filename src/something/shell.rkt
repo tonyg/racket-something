@@ -42,10 +42,12 @@ def-syntax shell-app stx
   syntax-case stx []
     _ f arg ...
       identifier? (syntax f) && bound-at-phase-0? (syntax f)
-      (syntax (base-app f arg ...))
+      syntax (base-app f arg ...)
     _ f arg ...
       identifier? (syntax f)
       build-command (syntax f) (syntax (arg ...))
+    _ f arg ...
+      syntax (base-app f arg ...)
 
 begin-for-syntax
   def bound-at-phase-0? id-stx
