@@ -18,7 +18,7 @@ def check-output expected-output expected-logging f
   def-values actual-output actual-logging:
     def o: (open-output-string)
     def l: (open-output-string)
-    parameterize [current-output-port o]: with-logging-to-port l f `info
+    parameterize {current-output-port: o}: with-logging-to-port l f `info
     values (get-output-string o) (get-output-string l)
   check-equal? (string-split actual-output "\n") expected-output
   check-equal? (string-split actual-logging "\n") expected-logging
@@ -58,14 +58,14 @@ check-output (list "print-and-return #f"
   check-equal? (3 + 4 + 5) 12
   check-equal? (3 - 4 - 5 base-minus 2 * 2) -10
   check-equal? (car [+]) (values +)
-  check-equal? [1, + , 2, 1 + 2] (list 1 (values +) 2 3)
+  check-equal? [1; + ; 2; 1 + 2] (list 1 (values +) 2 3)
   check-equal? (2 > 1) #t
 
   check-equal? (print-and-return #f || print-and-return 2 || print-and-return 3) 2
 
   def let-test-result:
     let (x 123) (y 234) (z 345)
-      [`inside-the-let, x, y, z]
+      [`inside-the-let; x; y; z]
   check-equal? let-test-result (list `inside-the-let 123 234 345)
 
   let loop (n 0)
@@ -85,7 +85,7 @@ check-output (list "print-and-return #f"
   def my-list
     { items ... : items }
 
-  check-equal? (my-list 1 2 3 4) [1, 2, 3, 4]
+  check-equal? (my-list 1 2 3 4) [1; 2; 3; 4]
 
   let
     def x: 123
@@ -93,15 +93,15 @@ check-output (list "print-and-return #f"
     check-equal? x 123
 
   def curried x:: y:: z:
-    [`curried, x, y, z]
+    [`curried; x; y; z]
 
   def ((curried2 x) y) z
-    [`curried2, x, y, z]
+    [`curried2; x; y; z]
 
-  check-equal? (((curried 1) 2) 3) [`curried, 1, 2, 3]
-  check-equal? (curried 1 . 2 . 3) [`curried, 1, 2, 3]
-  check-equal? (((curried2 1) 2) 3) [`curried2, 1, 2, 3]
-  check-equal? (curried2 1 . 2 . 3) [`curried2, 1, 2, 3]
+  check-equal? (((curried 1) 2) 3) [`curried; 1; 2; 3]
+  check-equal? (curried 1 . 2 . 3) [`curried; 1; 2; 3]
+  check-equal? (((curried2 1) 2) 3) [`curried2; 1; 2; 3]
+  check-equal? (curried2 1 . 2 . 3) [`curried2; 1; 2; 3]
 
 def-operator > 40 n-ary >
 check-equal? (4 > 3 > 2) #t

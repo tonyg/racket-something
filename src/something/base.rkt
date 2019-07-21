@@ -421,20 +421,20 @@
                  (syntax->list #'([(pat-piece ...) (body ...)] ...))))]))
 
 (define-syntax (something-struct stx)
-  (syntax-case stx (#%seq block)
-    [(_ name super (#%seq field ...) (block rest ...))
+  (syntax-case stx (block)
+    [(_ name super (field ...) (block rest ...))
      #'(struct name super (field ...) rest ...)]
-    [(_ name super (#%seq field ...) rest ...)
+    [(_ name super (field ...) rest ...)
      #'(struct name super (field ...) rest ...)]
-    [(_ name (#%seq field ...) (block rest ...))
+    [(_ name (field ...) (block rest ...))
      #'(struct name (field ...) rest ...)]
-    [(_ name (#%seq field ...) rest ...)
+    [(_ name (field ...) rest ...)
      #'(struct name (field ...) rest ...)]))
 
 (def-operator something-syntax-case #f prefix-macro something-syntax-case)
 (define-syntax (something-syntax-case stx parse)
-  (syntax-case stx (#%seq block)
-    [(_ s (#%seq lit ...) (block (pat ... (block body ...)) ...))
+  (syntax-case stx (block)
+    [(_ s (lit ...) (block (pat ... (block body ...)) ...))
      (quasisyntax/loc stx
        (syntax-case s (lit ...)
          #,@(map (lambda (clause-stx)
@@ -530,7 +530,7 @@
          (#%rewrite-infix body)))]))
 
 (define-syntax (something-parameterize stx)
-  (syntax-case stx (#%seq block)
-    [(_ (#%seq p ...) (block body ...))
+  (syntax-case stx (block)
+    [(_ (block (v (block e ...)) ...) (block body ...))
      (quasisyntax/loc stx
-       (parameterize (p ...) (#%rewrite-body body ...)))]))
+       (parameterize ((v (begin e ...)) ...) (#%rewrite-body body ...)))]))

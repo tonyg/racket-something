@@ -42,7 +42,7 @@ provide {
 }
 
 def-syntax shell-app stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ f arg ... {
       identifier? (syntax f) && bound-at-phase-0? (syntax f)
       syntax (base-app f arg ...)
@@ -80,7 +80,7 @@ def find-command command-name {
 }
 
 def-syntax parse-shell-argument stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ value {
       number? (syntax-e (syntax value))
       datum->syntax stx (number->string (syntax-e (syntax value)))
@@ -107,7 +107,7 @@ def format-shell-argument a {
 
 def-operator & 8 postfix run-in-background
 def-syntax run-in-background stx {
-  syntax-case stx [block] {
+  syntax-case stx (block) {
     _ (block expr ...) {
       syntax (run-in-background (begin expr ...))
     }
@@ -131,7 +131,7 @@ def shell-thread thunk {
 }
 
 def-syntax ensure stx {
-  syntax-case stx [block] {
+  syntax-case stx (block) {
     _ finally-expr (block body ...) {
       syntax (with-handlers {
         when values e {
@@ -145,7 +145,7 @@ def-syntax ensure stx {
 }
 
 def-syntax pipeline stx {
-  syntax-case stx [block, '|>', '|<'] {
+  syntax-case stx (block '|>' '|<') {
     _ (block) {
       syntax (copy-port (current-input-port) (current-output-port))
     }
@@ -172,7 +172,7 @@ def-syntax pipeline stx {
 
 def-operator | 10 left pipe
 def-syntax pipe stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ lhs rhs {
       syntax (pipe* {: run-pipe-stage lhs} {: run-pipe-stage rhs})
     }
@@ -189,14 +189,14 @@ def run-pipe-stage result {
 def pipe* lhs-thunk rhs-thunk {
   def-values i o { (make-pipe) }
   def lhs-thread {
-    parameterize [current-output-port o] {
+    parameterize { current-output-port { o } } {
       ensure (close-output-port o) {
         begin0 (lhs-thunk) (flush-output o)
       } &
     }
   }
   def rhs-thread {
-    parameterize [current-input-port i] {
+    parameterize { current-input-port { i } } {
       ensure (close-input-port i) {
         (rhs-thunk)
       } &
@@ -217,7 +217,7 @@ def-operator |> 10 left rev-apply
 def-operator |< 10 left rev-apply*
 
 def-syntax rev-apply stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ v id {
       identifier? (syntax id)
       syntax (shell-app id v)
@@ -229,7 +229,7 @@ def-syntax rev-apply stx {
 }
 
 def-syntax rev-apply* stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ v id {
       identifier? (syntax id)
       syntax (shell-app id v)
@@ -243,7 +243,7 @@ def-syntax rev-apply* stx {
 // Double-duty $id is an environment variable reference, and $(id) is an output capture
 def-operator $ 1100 prefix getenv*
 def-syntax getenv* stx {
-  syntax-case stx [] {
+  syntax-case stx () {
     _ exp {
       stx-pair? (syntax exp)
       quasisyntax (pipe exp (compose string-trim port->string))
@@ -293,7 +293,7 @@ def space-separated-columns (converters []) {
   def nsplits { length header - 1 }
   def split-once s {
     match s {
-      pregexp "^\\s*(\\S+)\\s+(\\S.*)?$" [_, h, t] { values h t }
+      pregexp "^\\s*(\\S+)\\s+(\\S.*)?$" [_; h; t] { values h t }
       _ { values s #f }
     }
   }

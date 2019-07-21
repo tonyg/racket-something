@@ -42,7 +42,7 @@
       [(token pos 'block kids)
        (->syntax (cons #'block (map walk kids)) pos)]
       [(token pos 'sequence kids)
-       (->syntax (cons #'#%seq (map walk (split-by token-comma? kids))) pos)]
+       (->syntax (cons #'#%seq (map walk kids)) pos)]
       [(token pos _ (namespaced-name #f id))
        (->syntax id pos)]
       [(token pos _ (namespaced-name ns id))

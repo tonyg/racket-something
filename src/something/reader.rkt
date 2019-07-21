@@ -5,7 +5,6 @@
 
          read-something-forms
          read-something-toplevel
-         token-comma?
 
          ;; For debugging:
          token->raw-sexp)
@@ -226,6 +225,12 @@
 (define (make-sequence pos contents)
   (token pos 'sequence contents))
 
+(define (closer-for opener)
+  (match opener
+    ['oparen 'cparen]
+    ['obrack 'cbrack]
+    ['obrace 'cbrace]))
+
 (define (detach-form finish-form acc-rev left-pos tokens remaining-lines grouping-terminator)
   (match tokens
     ['() #:when (not grouping-terminator)
@@ -266,48 +271,36 @@
                   final-lines
                   grouping-terminator)]
 
-    [(cons (token pos 'obrace _) more-tokens)
+    [(cons (token pos (and opener (or 'obrace 'obrack)) _) more-tokens)
+     (define closer (closer-for opener))
+     (define inner-finish-form (match opener ['obrace make-block] ['obrack make-sequence]))
      (let loop ((block-acc-rev '())
                 (lines (if (null? more-tokens)
                            remaining-lines
                            (cons more-tokens remaining-lines))))
        (match lines
-         ['() (unclosed-grouping left-pos 'cbrace)]
-         [(cons (cons (token _ 'cbrace _) final-tokens) final-lines)
-          (detach-form finish-form
-                       (cons (make-block pos (reverse block-acc-rev)) acc-rev)
-                       left-pos
-                       final-tokens
-                       final-lines
-                       grouping-terminator)]
+         ['() (unclosed-grouping left-pos closer)]
+         [(cons (cons (token _ (== closer) _) final-tokens) final-lines)
+          (define new-acc (cons (inner-finish-form pos (reverse block-acc-rev)) acc-rev))
+          (detach-form finish-form new-acc left-pos final-tokens final-lines grouping-terminator)]
          [(cons (cons (token _ 'semicolon _) more-tokens) more-lines)
           (loop block-acc-rev (lines-after-semicolon more-tokens more-lines))]
          [(cons (cons (? closer? (token pos got _)) _) _)
-          (mismatched-close-token pos 'cbrace got)]
+          (mismatched-close-token pos closer got)]
          [_
           (define-values (line remaining-lines) (detach-line lines))
           (loop (cons line block-acc-rev) remaining-lines)]))]
 
-    [(cons (token pos (and opener (or 'oparen 'obrack)) _) more-tokens)
-     (define closer (match opener
-                      ['oparen 'cparen]
-                      ['obrack 'cbrack]))
-     (define inner-finish-form (match opener
-                                 ['oparen make-form]
-                                 ['obrack make-sequence]))
+    [(cons (token pos 'oparen _) more-tokens)
      (define-values (form final-lines)
-       (detach-form inner-finish-form '() left-pos more-tokens remaining-lines closer))
+       (detach-form make-form '() left-pos more-tokens remaining-lines 'cparen))
      (match final-lines
-       ['() (unclosed-grouping left-pos closer)]
-       [(cons (cons (token _ (== closer) _) final-tokens) final-lines)
-        (detach-form finish-form
-                     (cons form acc-rev)
-                     left-pos
-                     final-tokens
-                     final-lines
-                     grouping-terminator)]
+       ['() (unclosed-grouping left-pos 'cparen)]
+       [(cons (cons (token _ 'cparen _) final-tokens) final-lines)
+        (define new-acc (cons form acc-rev))
+        (detach-form finish-form new-acc left-pos final-tokens final-lines grouping-terminator)]
        [(cons (cons (? closer? (token pos got _)) _) _)
-        (mismatched-close-token pos closer got)])]
+        (mismatched-close-token pos 'cparen got)])]
 
     [(cons (? closer?) more-tokens)
      (values (finish-form left-pos (reverse acc-rev)) (cons tokens remaining-lines))]
@@ -342,19 +335,12 @@
   (port-count-lines! p)
   (extract-forms (read-something-lines-toplevel p)))
 
-(define (token-comma? e)
-  (match e
-    [(token _ 'identifier (namespaced-name #f '|,|)) #t]
-    [_ #f]))
-
 ;; Useful for debugging.
 (define (token->raw-sexp t)
   (match t
     [(token _ 'form kids) (map token->raw-sexp kids)]
     [(token _ 'block kids) (cons '#%block (map token->raw-sexp kids))]
-    [(token _ 'sequence kids) (cons '#%seq (map token->raw-sexp
-                                                (filter (lambda (e) (not (token-comma? e)))
-                                                        kids)))]
+    [(token _ 'sequence kids) (cons '#%seq (map token->raw-sexp kids))]
     [(token _ _ (namespaced-name #f id)) id]
     [(token _ _ (namespaced-name ns id)) `(#%ns ,ns ,id)]
     [(token _ 'keyword val) (string->keyword (symbol->string val))]

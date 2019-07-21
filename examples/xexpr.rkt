@@ -7,7 +7,7 @@ require
   except-in xml document
 
 def-syntax single-xexpr stx
-  syntax-case stx [= , block]
+  syntax-case stx (= block)
     _ str
       string? (syntax-e . (syntax str))
       syntax str
@@ -19,7 +19,7 @@ def-syntax single-xexpr stx
       syntax (list (quote tag) (list (list (quote attr) attr-expr) ...))
 
 def-syntax xexpr stx
-  syntax-case stx [block]
+  syntax-case stx (block)
     _ (block xexpr)
       syntax (single-xexpr xexpr)
 

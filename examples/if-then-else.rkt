@@ -10,7 +10,7 @@ require
 
 def-operator IF #f statement-macro IF-statement
 def-syntax IF-statement stx
-  syntax-case stx [ELSE, block]
+  syntax-case stx (ELSE block)
     _ (_IF test (block true-exps ...)) (ELSE (block false-exps ...)) more ...
       syntax ('#%rewrite-body'
               (base_cond (test ('#%rewrite-body' true-exps ...))
@@ -24,7 +24,7 @@ def-syntax IF-statement stx
       syntax ('#%rewrite-body' (begin (IF pieces ...)) more ...)
 
 def-syntax IF stx
-  syntax-case stx [ELSE, block]
+  syntax-case stx (ELSE block)
     _ test (block true-exps ...) ELSE (block false-exps ...)
       syntax (base_if test ('#%rewrite-body' true-exps ...) ('#%rewrite-body' false-exps ...))
     _ test (block true-exps ...)

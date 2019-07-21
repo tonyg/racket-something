@@ -23,8 +23,8 @@ def factorial n
 
 module+ test
   require: rackunit
-  check-equal? (for/list { x: .. 8 }: fibfast x) [0, 1, 1, 2, 3, 5, 8, 13]
-  check-equal? (for/list { x: .. 8 }: factorial x) [1, 1, 2, 6, 24, 120, 720, 5040]
+  check-equal? (for/list { x: .. 8 }: fibfast x) [0; 1; 1; 2; 3; 5; 8; 13]
+  check-equal? (for/list { x: .. 8 }: factorial x) [1; 1; 2; 6; 24; 120; 720; 5040]
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +33,7 @@ require
 
 def-syntax sweet-let* stx // like the example at https://sourceforge.net/p/readable/wiki/Examples/
                           // but altered for something-style blocks
-  syntax-case stx [block]
+  syntax-case stx (block)
     _ (block body ...)
       syntax (begin body ...)
     _ (var init) rest ... (block body ...)
@@ -96,8 +96,8 @@ def add-if-all-numbers/acc2 lst
 
 module+ test
   def check-adder adder
-    check-equal? (adder [1, 2, 3, 4]) 10
-    check-equal? (adder [1, 2, "hello", 4]) #f
+    check-equal? (adder [1; 2; 3; 4]) 10
+    check-equal? (adder [1; 2; "hello"; 4]) #f
 
   check-adder add-if-all-numbers
   check-adder add-if-all-numbers2

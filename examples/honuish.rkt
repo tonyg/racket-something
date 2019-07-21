@@ -16,18 +16,18 @@ for { x: 1 .. 10 }
   printf "x ~a y ~a\n" x y
 
 // A for loop that iterates over a list of numbers
-for { x: [1, 2, 3] }
+for { x: [1; 2; 3] }
   printf "x ~a\n" x
 
 ///////////////////////////////////////////////////////////////////////////
 // Some more examples
 
 (newline)
-for { x: .. 3; y: ["hello", "there", "racketeer"] }
+for { x: .. 3; y: ["hello"; "there"; "racketeer"] }
   printf "~a ~a\n" x y
 
 (newline)
-for* { x: .. 3; y: ["hello", "there", "racketeer"] }
+for* { x: .. 3; y: ["hello"; "there"; "racketeer"] }
   printf "~a ~a\n" x y
 
 for/hash { x : .. 3 }

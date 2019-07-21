@@ -59,7 +59,7 @@ For example, here's one possible implementation of that `for` syntax:
       prefix-in base_ racket/base
 
     def-syntax for stx
-      syntax-case stx [block]
+      syntax-case stx (block)
         _ (block (v (block exp)) ...) (block body ...)
           (syntax (base_for ((v exp) ...) body ...))
 
@@ -134,7 +134,7 @@ reads as
 
 Square brackets are syntactic sugar for a `#%seq` macro:
 
-    [a, b, c, d]        →        (#%seq a b c d)
+    [a; b; c; d]        →        (#%seq a b c d)
 
 Forms starting with `block` in expression context expand into
 `match-lambda*` like this:
@@ -155,25 +155,25 @@ The `map*` function exported from `something/lang/implicit` differs
 from `map` in `racket/base` in that it takes its arguments in the
 opposite order, permitting maps to be written
 
-    map* [1, 2, 3, 4]
+    map* [1; 2; 3; 4]
       item:
         item + 1
 
-    map* [1, 2, 3, 4]
+    map* [1; 2; 3; 4]
       item: item + 1
 
-    map* [1, 2, 3, 4]: item: item + 1
+    map* [1; 2; 3; 4]: item: item + 1
 
-    map* [1, 2, 3, 4] { item: item + 1 }
+    map* [1; 2; 3; 4] { item: item + 1 }
 
 A nice consequence of all of the above is that curried functions have
 an interesting appearance:
 
     def curried x:: y:: z:
-      [x, y, z]
+      [x; y; z]
 
     require: rackunit
-    check-equal? (((curried 1) 2) 3) [1, 2, 3]
+    check-equal? (((curried 1) 2) 3) [1; 2; 3]
 
 # A larger example
 
@@ -189,7 +189,7 @@ More examples can be found in the [examples](examples/) and
       except-in xml document
 
     def-syntax single-xexpr stx
-      syntax-case stx [= , block]
+      syntax-case stx (= block)
         _ str
           string? (syntax-e . (syntax str))
           syntax str
@@ -201,7 +201,7 @@ More examples can be found in the [examples](examples/) and
           syntax (list (quote tag) (list (list (quote attr) attr-expr) ...))
 
     def-syntax xexpr stx
-      syntax-case stx [block]
+      syntax-case stx (block)
         _ (block xexpr)
           syntax (single-xexpr xexpr)
 

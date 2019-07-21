@@ -17,10 +17,10 @@ provide
   all-from-out syndicate/actor
 
 def-syntax def-block-syntax stx
-  syntax-case stx []
+  syntax-case stx ()
     _ outer-id inner-id
       syntax (def-syntax outer-id outer-stx:
-                syntax-case outer-stx [block]
+                syntax-case outer-stx (block)
                   _ (block body (... ...))
                     syntax (inner-id body (... ...)))
 
@@ -34,11 +34,11 @@ def-block-syntax on-start s_on-start
 def-block-syntax on-stop s_on-stop
 
 def-syntax def-event-syntax stx
-  syntax-case stx []
+  syntax-case stx ()
     _ outer-id inner-id
       syntax (begin (def-operator outer-id #f prefix-macro outer-id)
                     (def-syntax outer-id outer-stx parse:
-                      syntax-case outer-stx [block]:
+                      syntax-case outer-stx (block):
                         _ evt (... ...) (block body (... ...))
                           (quasisyntax/loc outer-stx
                             (inner-id (unsyntax (parse (syntax (evt (... ...)))))
@@ -55,12 +55,12 @@ def-event-syntax on s_on
 def-event-syntax stop-when s_stop-when
 
 def-syntax field stx
-  syntax-case stx []
+  syntax-case stx ()
     _ id (block init)
       syntax (s_field (id init))
 
 def-syntax def/dataflow stx
-  syntax-case stx []
+  syntax-case stx ()
     _ id (block init)
       syntax (s_define/dataflow id init)
 

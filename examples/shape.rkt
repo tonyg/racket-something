@@ -11,7 +11,7 @@ require
 def-operator -> 900 left { receiver message: message receiver }
 
 def-syntax def-protocol stx
-  syntax-case stx [block]
+  syntax-case stx (block)
     _ protocol-name (block (method arg ...) ...)
       syntax (begin (def method arg ... : { receiver : send receiver method arg ... }) ...)
 
@@ -19,7 +19,7 @@ def-syntax def-protocol stx
 
 def-operator ->> #f prefix-macro ->>
 def-syntax ->> stx parse
-  syntax-case stx [block]
+  syntax-case stx (block)
     _ p ... (block body ...)
       syntax (let:
                 def v: '#%rewrite-infix' p ...

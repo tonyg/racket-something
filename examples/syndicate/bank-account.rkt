@@ -5,8 +5,8 @@ require
     something/infix
     "syndicate.rkt"
 
-struct account [balance] :prefab
-struct deposit [amount] :prefab
+struct account (balance) :prefab
+struct deposit (amount) :prefab
 
 run-ground
     spawn

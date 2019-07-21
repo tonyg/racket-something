@@ -10,9 +10,9 @@ require
     only-in racket/port read-bytes-line-evt
     only-in racket/string string-trim string-split
 
-struct file [name, content] :prefab
-struct save [file] :prefab
-struct delete [name] :prefab
+struct file (name content) :prefab
+struct save (file) :prefab
+struct delete (name) :prefab
 
 def sleep sec
     def timer-id: gensym `sleep
@@ -50,7 +50,7 @@ run-ground
         on message (inbound (external-event e [? bytes? $bs]))
             match string-split (string-trim (bytes->string/utf-8 bs))
 
-                ["open", name]:
+                ["open"; name]:
                     def reader-id: !reader-count
                     reader-count <- !reader-count + 1
                     spawn
@@ -63,13 +63,13 @@ run-ground
                                     contents)
                         on-stop: printf "Reader ~a closing file ~v.\n" reader-id name
 
-                ["close", name]:
+                ["close"; name]:
                     !! `(stop-watching ,name)
 
-                ["write", name, words, ...]:
+                ["write"; name; words; ...]:
                     !! save . file name words
 
-                ["delete", name]:
+                ["delete"; name]:
                     !! delete name
 
                 _:

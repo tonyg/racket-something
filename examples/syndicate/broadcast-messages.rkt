@@ -6,7 +6,7 @@ require
     something/infix
     "syndicate.rkt"
 
-struct envelope [destination, message] :prefab
+struct envelope (destination message) :prefab
 
 run-ground
     spawn: on message (envelope `alice $message)
