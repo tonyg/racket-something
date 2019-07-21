@@ -34,6 +34,7 @@ provide
   getenv*
 
   read-lines
+  read0
   discard
   preserve-header
   space-separated-columns
@@ -201,7 +202,10 @@ module+ reader
 // Sketches of utilities
 
 def read-lines (p (current-input-port))
-  for/list ((line (in-lines p))) line
+  port->lines p :line-mode `any
+
+def read0 (p (current-input-port))
+  port->string p |< string-split "\0"
 
 def (discard)
   for ((line (in-lines))) (void)

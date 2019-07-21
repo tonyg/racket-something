@@ -36,6 +36,7 @@
                         "\\n"
                         "\\r"
                         "\\t"
+                        "\\0"
                         (:: "\\u" c:hex-digit c:hex-digit c:hex-digit c:hex-digit)
                         (:: "\\x" c:hex-digit c:hex-digit))]
   [c:symbol-start (:or alphabetic "_" "*" "+" "-")] ;; this is getting silly
@@ -125,6 +126,7 @@
        [(list* #\\ #\n rest) (cons #\newline (loop rest))]
        [(list* #\\ #\r rest) (cons #\return (loop rest))]
        [(list* #\\ #\t rest) (cons #\tab (loop rest))]
+       [(list* #\\ #\0 rest) (cons #\nul (loop rest))]
        [(list* #\\ #\u x1 x2 x3 x4 rest)
         (cons (integer->char
                (string->number (string x1 x2 x3 x4) 16))
