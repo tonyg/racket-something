@@ -33,14 +33,15 @@ This program:
 
 ... reads as this S-expression:
 
-    (module something-module something/lang/implicit
-      (#%rewrite-infix
+    (module something-module something/base
+      (#%rewrite-body
        (for (block (x (block (1 .. 10))))
             (block (def y (block (x + 1)))
                    (printf "x ~a y ~a\n" x y)))))
 
-The `#%rewrite-infix` macro consults an operator table, extendable via
-the `def-operator` macro, to rewrite infix syntax into standard prefix
+The `#%rewrite-body` macro, together with its companion
+`#%rewrite-infix`, consults an operator table, extendable via the
+`def-operator` macro, to rewrite infix syntax into standard prefix
 S-expressions.
 
 The `block` syntax has many different interpretations. It has a macro
@@ -83,7 +84,7 @@ and are then made available to the normal macro-expansion process
 
 Colons are optional to indicate a following suite at the end of an
 indentation-sensitive line. Indentation-sensitivity is disabled inside
-parentheses and square brackets. If inside a parenthesised expression,
+parentheses. If inside a parenthesised expression,
 indentation-sensitivity can be reenabled with a colon at the end of a
 line:
 
@@ -134,7 +135,14 @@ reads as
 
 Square brackets are syntactic sugar for a `#%seq` macro:
 
-    [a; b; c; d]        →        (#%seq a b c d)
+    [a; b; c; d e f]    →        (#%seq a b c (d e f))
+
+    [                   →        (#%seq a (b (block c)) (d e f))
+      a
+      b
+        c
+      d e f
+    ]
 
 Forms starting with `block` in expression context expand into
 `match-lambda*` like this:
@@ -172,7 +180,7 @@ an interesting appearance:
     def curried x:: y:: z:
       [x; y; z]
 
-    require: rackunit
+    require rackunit
     check-equal? (((curried 1) 2) 3) [1; 2; 3]
 
 # A larger example
@@ -244,7 +252,7 @@ See [sth8.el](sth8.el).
 
 # Licence
 
-Copyright (C) 2016 Tony Garnock-Jones <mailto:tonyg@leastfixedpoint.com>
+Copyright (C) 2016–2019 Tony Garnock-Jones <mailto:tonyg@leastfixedpoint.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
