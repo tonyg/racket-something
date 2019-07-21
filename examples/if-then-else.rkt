@@ -11,17 +11,15 @@ require
 def-operator IF #f statement-macro IF-statement
 def-syntax IF-statement stx
   syntax-case stx (ELSE block)
-    _ (_IF test (block true-exps ...)) (ELSE (block false-exps ...)) more ...
-      syntax ('#%rewrite-body'
-              (base_cond (test ('#%rewrite-body' true-exps ...))
-                         (else ('#%rewrite-body' false-exps ...)))
-              more ...)
-    _ (_IF test (block true-exps ...)) more ...
-      syntax ('#%rewrite-body'
-              (base_when test ('#%rewrite-body' true-exps ...))
-              more ...)
-    _ (_IF pieces ...) more ...
-      syntax ('#%rewrite-body' (begin (IF pieces ...)) more ...)
+    _ (head ...) ((_IF test (block true-exps ...)) (ELSE (block false-exps ...)) more ...)
+      syntax ('#%rewrite-body*' (head ... (base_cond (test ('#%rewrite-body' true-exps ...))
+                                                     (else ('#%rewrite-body' false-exps ...))))
+                                (more ...))
+    _ (head ...) ((_IF test (block true-exps ...)) more ...)
+      syntax ('#%rewrite-body*' (head ... (base_when test ('#%rewrite-body' true-exps ...)))
+                                (more ...))
+    _ (head ...) ((_IF pieces ...) more ...)
+      syntax ('#%rewrite-body*' (head ...) ((begin (IF pieces ...)) more ...))
 
 def-syntax IF stx
   syntax-case stx (ELSE block)

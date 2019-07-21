@@ -31,6 +31,7 @@
          dump-operator-table!
          #%rewrite-infix
          #%rewrite-body
+         #%rewrite-body*
          #%no-infix
          rec
          (rename-out [something-define def]
@@ -307,22 +308,21 @@
   result)
 
 (define-syntax (#%rewrite-body stx)
+  (syntax-case stx ()
+    [(_ . mores)
+     (quasisyntax/loc #'mores (#%rewrite-body* () mores))]))
+
+(define-syntax (#%rewrite-body* stx)
   (define statement-macro-table (operator-table '(statement-macro)))
-  ;; (log-info "#%rewrite-body(~v) --> ~v" (syntax-local-phase-level) stx)
-  (define result
-    (syntax-case stx ()
-      [(_ (id e ...) more ...)
-       (statement-macro-table #'id)
-       (let ((op (statement-macro-table #'id))) ;; TODO: avoid redundant lookup
-         ((operator-handler op) #'((id e ...) more ...)))]
-      [(_)
-       #'(begin)]
-      [(_ e)
-       #'(#%rewrite-infix e)]
-      [(_ e more ...)
-       #'(begin (#%rewrite-infix e) (#%rewrite-body more ...))]))
-  ;; (log-info "<-- #%rewrite-body(~v) ~v" (syntax-local-phase-level) (syntax->datum result))
-  result)
+  (syntax-case stx ()
+    [(_ heads ((id e ...) more ...))
+     (statement-macro-table #'id)
+     (let ((op (statement-macro-table #'id))) ;; TODO: avoid redundant lookup
+       ((operator-handler op) (quasisyntax/loc stx (heads ((id e ...) more ...)))))]
+    [(_ heads ())
+     (quasisyntax/loc stx (begin . heads))]
+    [(_ (head ...) (e . mores))
+     (quasisyntax/loc #'mores (#%rewrite-body* (head ... (#%rewrite-infix e)) mores))]))
 
 (define-syntax (def-operator stx [parse #f]) ;; optional parse -> can be used in both contexts
   (syntax-case stx ()
