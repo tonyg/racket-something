@@ -162,17 +162,17 @@ def-syntax rev-apply stx
   syntax-case stx []
     _ v id
       identifier? (syntax id)
-      syntax (id v)
+      syntax (shell-app id v)
     _ v (f arg ...)
-      syntax (f arg ... v)
+      syntax (shell-app f arg ... v)
 
 def-syntax rev-apply* stx
   syntax-case stx []
     _ v id
       identifier? (syntax id)
-      syntax (id v)
+      syntax (shell-app id v)
     _ v (f arg ...)
-      syntax (f v arg ...)
+      syntax (shell-app f v arg ...)
 
 // Double-duty $id is an environment variable reference, and $(id) is an output capture
 def-operator $ 1100 prefix getenv*
