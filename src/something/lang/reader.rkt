@@ -9,19 +9,6 @@
 
 (require "../reader.rkt")
 
-(define (split-by pred xs)
-  (define (consume-separators xs)
-    (match xs
-      ['() '()]
-      [(cons x xs) #:when (pred x) (consume-separators xs)]
-      [_ (gather-until-separator xs '())]))
-  (define (gather-until-separator xs acc-rev)
-    (match xs
-      ['() (list (reverse acc-rev))]
-      [(cons x xs) #:when (pred x) (cons (reverse acc-rev) (consume-separators xs))]
-      [(cons x xs) (gather-until-separator xs (cons x acc-rev))]))
-  (consume-separators xs))
-
 (define (form->syntax src t)
   (define (->syntax v pos)
     (datum->syntax #f v (vector src
