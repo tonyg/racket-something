@@ -461,11 +461,11 @@
 
 (define-for-syntax (expand-let-like kind-stx expr-stx)
   (syntax-case expr-stx (block)
-    [(_ loop (name init) ... (block body ...))
+    [(_ loop (name init) ... (block . bodies))
      (identifier? #'loop)
-     #`(#,kind-stx loop ((name init) ...) (#%rewrite-body body ...))]
-    [(_ (name init) ... (block body ...))
-     #`(#,kind-stx ((name init) ...) (#%rewrite-body body ...))]))
+     #`(#,kind-stx loop ((name init) ...) (#%rewrite-body . bodies))]
+    [(_ (name init) ... (block . bodies))
+     #`(#,kind-stx ((name init) ...) (#%rewrite-body . bodies))]))
 
 (define-syntax (something-let stx) (expand-let-like #'let stx))
 (define-syntax (something-let* stx) (expand-let-like #'let* stx))
@@ -506,8 +506,8 @@
 
 (define-syntax (something-module+ stx)
   (syntax-case stx (block)
-    [(something-module+ modname (block body ...))
-     (syntax/loc stx (module+ modname (#%rewrite-body body ...)))]))
+    [(something-module+ modname (block . bodies))
+     (syntax/loc stx (module+ modname (#%rewrite-body . bodies)))]))
 
 (def-operator something-if #f prefix-macro something-if)
 (define-syntax (something-if stx parse)
