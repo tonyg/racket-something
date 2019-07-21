@@ -56,7 +56,7 @@ For example, here's one possible implementation of that `for` syntax:
       for
 
     require
-      for-syntax something/lang/implicit
+      for-syntax something/base
       prefix-in base_ racket/base
 
     def-syntax for stx
